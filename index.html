@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Retro terminal portfolio website">
+  <title>Terminal — Personal OS</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="crt">
+    <div class="scanlines"></div>
+    <header class="topbar">
+      <div class="brand">PERSONAL OS <span>v1.0</span></div>
+      <div class="window-buttons"><button id="minBtn">_</button><button id="closeBtn">×</button></div>
+    </header>
+
+    <main class="desktop">
+      <section class="boot-panel" id="terminalWindow">
+        <div id="bootText" class="boot-text"></div>
+        <div class="prompt-row">
+          <span>guest@personal-os:~$</span>
+          <input id="command" autocomplete="off" spellcheck="false" autofocus>
+        </div>
+        <div id="output"></div>
+      </section>
+
+      <nav class="dock" aria-label="Main navigation">
+        <button data-command="about">ABOUT</button>
+        <button data-command="imsai">IMSAI-8080</button>
+        <button data-command="github">GITHUB</button>
+        <button data-command="linkedin">LINKEDIN</button>
+        <button data-command="resume">RESUME</button>
+        <button data-command="contact">CONTACT</button>
+      </nav>
+
+      <div class="status">
+        <span>CPU: 8080 EMULATOR</span>
+        <span>RAM: 64K</span>
+        <span>STATUS: ONLINE</span>
+        <span id="clock"></span>
+      </div>
+    </main>
+  </div>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+:root{
+  --bg:#020502;
+  --panel:#071007;
+  --green:#7dff8a;
+  --dim:#3b9c49;
+  --line:#174d20;
+  --glow:0 0 6px rgba(125,255,138,.65);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#000;color:var(--green);font-family:"Courier New",monospace}
+body{overflow:hidden}
+.crt{min-height:100vh;background:radial-gradient(ellipse at center,#0b160b 0,#020502 65%,#000 100%);text-shadow:var(--glow);position:relative}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:20;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.018) 0,rgba(255,255,255,.018) 1px,transparent 2px,transparent 4px);mix-blend-mode:screen}
+.topbar{height:44px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#030803;box-shadow:0 0 20px rgba(0,255,50,.08)}
+.brand{font-weight:bold;letter-spacing:2px}.brand span{font-size:11px;color:var(--dim)}
+.window-buttons{display:flex;gap:6px}.window-buttons button{width:28px;height:24px;background:#030803;border:1px solid var(--line);color:var(--green);font:inherit;cursor:pointer}
+.desktop{height:calc(100vh - 44px);display:flex;flex-direction:column;padding:18px;gap:14px}
+.boot-panel{flex:1;min-height:0;border:1px solid var(--line);background:rgba(0,10,0,.58);padding:20px;overflow:auto;box-shadow:inset 0 0 30px rgba(0,255,50,.04),0 0 16px rgba(0,255,50,.05)}
+.boot-text{white-space:pre-wrap;line-height:1.55}
+.prompt-row{display:flex;gap:8px;margin-top:14px;align-items:center}
+.prompt-row input{flex:1;background:transparent;border:0;outline:0;color:var(--green);font:inherit;text-shadow:var(--glow);caret-color:var(--green)}
+#output{white-space:pre-wrap;line-height:1.5;margin-top:10px;color:#a2ffa9}
+.dock{display:flex;flex-wrap:wrap;gap:8px}
+.dock button{background:#030803;border:1px solid var(--line);color:var(--green);padding:10px 13px;font:inherit;cursor:pointer;letter-spacing:1px}
+.dock button:hover{background:#0b200d;box-shadow:var(--glow)}
+.status{border-top:1px solid var(--line);padding-top:8px;display:flex;justify-content:space-between;gap:10px;color:var(--dim);font-size:12px;flex-wrap:wrap}
+.flash{animation:flash .18s linear}
+@keyframes flash{50%{opacity:.35}}
+.minimized .boot-panel{display:none}
+.minimized .desktop{height:calc(100vh - 44px)}
+@media(max-width:700px){
+  .desktop{padding:10px}.boot-panel{padding:13px}.status{font-size:10px}.dock button{padding:8px 9px;font-size:12px}
+}
