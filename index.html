@@ -1,47 +1,109 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en-us">
 <head>
+	<meta name="generator" content="Hugo 0.123.7">
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Retro terminal portfolio website">
-  <title>Terminal — Personal OS</title>
-  <link rel="stylesheet" href="css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0a0a'/%3E%3Ctext x='8' y='11' font-family='monospace' font-size='7' font-weight='bold' fill='%2300ff41' text-anchor='middle'%3Esg%24%3C/text%3E%3C/svg%3E">
+  <title>Steve Gibson - Gibson OS v4.2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/css/jquery.terminal.min.css">
+  <link rel="stylesheet" href="css/main.min.947e2a9396014bf6b301f7735b2318c309d577f15f9fa09c6adef9f47a81efa4.css" integrity="sha256-lH4qk5YBS/azAfdzWyMYwwnVd/Ffn6Ccat759HqB76Q=">
 </head>
-<body>
-  <div class="crt">
-    <div class="scanlines"></div>
-    <header class="topbar">
-      <div class="brand">PERSONAL OS <span>v1.0</span></div>
-      <div class="window-buttons"><button id="minBtn">_</button><button id="closeBtn">×</button></div>
-    </header>
-
-    <main class="desktop">
-      <section class="boot-panel" id="terminalWindow">
-        <div id="bootText" class="boot-text"></div>
-        <div class="prompt-row">
-          <span>guest@personal-os:~$</span>
-          <input id="command" autocomplete="off" spellcheck="false" autofocus>
-        </div>
-        <div id="output"></div>
-      </section>
-
-      <nav class="dock" aria-label="Main navigation">
-        <button data-command="about">ABOUT</button>
-        <button data-command="imsai">IMSAI-8080</button>
-        <button data-command="github">GITHUB</button>
-        <button data-command="linkedin">LINKEDIN</button>
-        <button data-command="resume">RESUME</button>
-        <button data-command="contact">CONTACT</button>
-      </nav>
-
-      <div class="status">
-        <span>CPU: 8080 EMULATOR</span>
-        <span>RAM: 64K</span>
-        <span>STATUS: ONLINE</span>
-        <span id="clock"></span>
+<body><a href="cdn-cgi/content%3Fid=LGXjpV16G366dcM62OvNGjcVIjRtr07FKjIdmemB0ZE-1787503772.4276643-1.2.1.1-G3e4BsoYIml7xQARCOU5z61l1A5vPRVANFKQ7VqNoNI_xyML7UBZcxeXM.lrsjXE.html" aria-hidden="true" rel="nofollow noopener" style="display: none !important; visibility: hidden !important"></a>
+<div id="desktop">
+  <div id="terminal-window" class="window">
+    <div class="window-titlebar">
+      <div class="window-title">stevegibson.com - Terminal</div>
+      <div class="window-controls">
+        <button class="window-btn window-btn-minimize" title="Minimize">_</button>
+        <button class="window-btn window-btn-close" title="Close">x</button>
       </div>
-    </main>
+    </div>
+    <div id="terminal"></div>
   </div>
-  <script src="js/app.js"></script>
-</body>
+
+  <div id="minimized-tray"></div>
+
+  <div id="taskbar">
+    <button class="taskbar-icon" id="taskbar-terminal" data-type="terminal">
+      <img src="images/icons/terminal.svg" alt="Terminal">
+      <span>Terminal</span>
+    </button>
+    
+    <button class="taskbar-icon"
+            data-type="imsai"
+            
+            >
+      <img src="images/icons/imsai.svg" alt="IMSAI-8080">
+      <span>IMSAI-8080</span>
+    </button>
+    
+    <button class="taskbar-icon"
+            data-type="link"
+            data-url="https://github.com/sg"
+            >
+      <img src="images/icons/github.svg" alt="GitHub">
+      <span>GitHub</span>
+    </button>
+    
+    <button class="taskbar-icon"
+            data-type="link"
+            data-url="https://linkedin.com/in/stevegibson"
+            >
+      <img src="images/icons/linkedin.svg" alt="LinkedIn">
+      <span>LinkedIn</span>
+    </button>
+    
+    <button class="taskbar-icon"
+            data-type="link"
+            data-url="/Steve_Gibson_resume.pdf"
+            >
+      <img src="images/icons/resume.svg" alt="Resume">
+      <span>Resume</span>
+    </button>
+    
+    <button class="taskbar-icon"
+            data-type="window"
+            
+            data-title="Contact Me" data-content="steve@stevegibson.com">
+      <img src="images/icons/contact.svg" alt="Contact">
+      <span>Contact</span>
+    </button>
+    
+  </div>
+</div>
+<script>
+window.SGIBSON = {
+  commands: {"about":{"description":"About me","lines":["━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━","Steve \"hacks the\" Gibson","━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━","","Based in Austin, TX, I'm a tech and gadget enthusiast. I enjoy building and coding on \"cyber decks\", LoRa radios (MeshCore), and retro-computing devices and replicas.","","For my home lab I built a PDP-11/70 replica that runs 2.11BSD, an IMSAI 8080 (as seen in the iconic movie, WarGames), and an RC-2014 Z80 system that runs CP/M.","","I also enjoy hacking IoT devices to see what makes them tick to either gain admin access or fix an issue preventing them from working. This can involve interfacing with JTAG, UART, port scanning and attempting to reverse a proprietary network protocol, etc. Sometimes it involves dumping firmware to extract compressed file system images.","","I'm also a big soccer fan and love attending Austin FC games at Q2 stadium. Listos Verde!","","Type 'resume' for more work background.","Type 'projects' to see what I'm working on.",""],"name":"about"},"help":{"description":"Show available commands","lines":["Available commands:","","  info:    help  about  resume  projects  misc  ls  man","  system:  uname  uptime  whoami  finger  df  dmesg  ps  top","           date  history  motd  reboot","  toys:    wargames  telnet  mesh  nmap  tape  sl  decrypt  imsai-sim","","Try 'man \u003ccommand\u003e' for details.","A few commands aren't listed anywhere."],"name":"help"},"misc":{"description":"Miscellaneous","lines":["Miscellaneous","━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",""," Just a placeholder for now.",""],"name":"misc"},"projects":{"description":"View my projects","lines":["━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━","Projects","━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━","","PicoCalc firmware:","  Adding wifi, sockets, and shell (pseudo OS) capabilities to the picocalc_lua project.","  (https://github.com/sg/picocalc_lua/tree/wifi-sockets)","","HackberryPiCM5:","  Modding and configuring this little powerhouse to do almost anything a laptop can do.","  (https://github.com/ZitaoTech/HackberryPiCM5)","","MeshCore:","  I have a custom-built router up on the roof, helping to build out the off-grid communication network here in the Central Texas area.","  (https://austinmesh.org)","","Home Lab:","  I run a proxmox server for hosting various virtual machines internally where I have a local media server, local photo storage/syncing, coding, analysis, and test VMs with various OS (Linux, Windows, BSDs, etc)","","stevegibson.com:","  This website ;)",""],"name":"projects"},"resume":{"description":"View my resume","lines":["Opening resume PDF in a new tab..."],"name":"resume","open":"/Steve_Gibson_resume.pdf"}},
+  prompt: "[/home/sg]$ ",
+  greeting: "  ________\n /  _____/\n/   \\  ___\n\\    \\_\\  \\\n \\______  / ibson\n        \\/  \n\nStarting gibsh shell...\n\nEnter 'help' for commands.",
+  greetingWide: "  ________._____.\n /  _____/|__\\_ |__   __________   ____\n/   \\  ___|  || __ \\ /  ___/  _ \\ /    \\\n\\    \\_\\  \\  || \\_\\ \\\\___ (  \u003c_\u003e )   |  \\\n \\______  /__||___  /____  \u003e____/|___|  /\n        \\/        \\/     \\/           \\/\n\nStarting gibsh shell...\n\nEnter 'help' for commands.",
+  sim: {
+    js: "/sim/sim.a1519f2f7eafb9329bf3bec5e7e6a15ac6fd213bb312b24b083c9dfea19b1f8a.js",
+    worker: "/sim/worker.a690e795cad84434829894af8b86fa57c8b101a858e983ffa839e95233d08ef0.js",
+    cpu: "/sim/z80.c875d170bc890fbf64b250177f1e8fe43e15b254b4e6ef6184b72ff79c09a24a.js",
+    cpu8080: "/sim/i8080.5c4c1cf3f97d6d999b4d34355f739d88ed19feeecddbbada0ec06659f738046a.js",
+    modem: "/sim/sim-modem.d69a0f0e90683decba11f463a1b7fa1d4c3bc95b524fe9dfd4c816550e3a1586.js",
+    rom: "/sim/mpu-b-rom.fea1b6e9c4623e7707ca3fa24236ec78fb84ffc5ed46c8893d3b1feb8e790548.bin",
+    romA: "/sim/mpu-a-rom.97b472fd1d9e22181e8065b240cf0e3cc828a692d29165c53e8eb9b5a7c1488d.bin",
+    css: "/sim/sim.370a18de759b79d1759eb99225b658a7829f331f1328740459d81e7536f2036e.css",
+    docs: { about: "/sim/docs/about.8c6d221da2fc654a07ccafe5b331a5ecae6a6b6332ccfc45c9c8bc422ba3a81a.md",
+            design: "/sim/docs/design.b2fa7e0710978da6db772e8da95e0f35ddfb082790bb4138e710ebd1a6f98bf0.md",
+            notice: "/sim/docs/notice.9ae610ecd069278b2f1dae93d1a9a1c3cc5893f16fc681294a7527de86e514ce.md" },
+    xtermJs: "/vendor/js/xterm.f0aea0f75f48559013ae6643c2479dd737d26da42d5524e6d2b70915ae6523c7.js",
+    xtermCss: "/vendor/css/xterm.832f3f2c603b43ad4351ff04970150cc7a873014276db126a6065c6dd81e4872.css",
+    disk: "/disks/cpm22.fac98c55550afb4ccb9bcd87ddce28c66ba0c30995983e6b4c6d6208b03322e6.dsk",
+    nzdisk: "/disks/nz-com-22-ref.7c3ac05107b860c619ebc459d3f5f8e6116887138d7cdf2619e3cc7663cf5443.dsk"
+  }
+};
+</script>
+
+  <script src="vendor/js/jquery.min.js"></script>
+  <script src="vendor/js/jquery.terminal.min.js"></script>
+  <script src="js/windowmanager.min.1ad94fa08936efa635914ca95d5d0b35e25472a1f0427c7daaea83267bbc5ccd.js" integrity="sha256-GtlPoIk276Y1kUypXV0LNeJUcqHwQnx9quqDJnu8XM0="></script>
+  <script src="js/terminal.min.3281bde3c15aeb53944e50f33b6ec137babc33aba0ce8abd4771062cd0f68771.js" integrity="sha256-MoG948Fa61OUTlDzO27BN7q8M6ugzoq9R3EGLND2h3E="></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2fb9c71ac25da76',t:'MTc4NzUwMzc3Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
