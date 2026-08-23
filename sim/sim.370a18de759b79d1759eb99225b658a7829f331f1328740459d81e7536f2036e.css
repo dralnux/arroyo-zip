@@ -1,0 +1,773 @@
+/* IMSAI-8080 UI (loaded only when the simulator opens) */
+
+/* ── themes ──────────────────────────────────────────────────────────────────
+   Every colour below is a variable so a theme is a palette swap, not a fork.
+   sim.js stamps sim-theme-<name> on <html>, which reaches the sim window, its
+   child windows, the modals and the context menu (all separate DOM roots).
+   Defaults here are "Cyberpunk"; ".sim-theme-original" overrides them further
+   down, after the rules it needs to beat on specificity.  */
+:root {
+  --sim-bg: #0a0a0a;
+  --sim-fg: #00ff41;                 /* bright text, strong borders */
+  --sim-fg-dim: #00cc33;             /* labels */
+  --sim-fg-dimmer: #00993d;          /* muted text */
+  --sim-fg-alt: #00e05a;             /* emphasis, sub-headings */
+  --sim-fg-note: #00802a;            /* footnotes */
+  --sim-line: #00662a;               /* hairlines, dim borders */
+  --sim-accent-rgb: 0, 255, 65;      /* every wash and glow derives from this */
+  --sim-btn-bg: #0d1f0d;
+  --sim-disk-bg: #063b12;
+  --sim-hd: #ffcc00;                 /* hard disk */
+  --sim-hd-dim: #b8860b;
+  --sim-hd-bg: #3b2f06;
+  --sim-hd-rgb: 255, 204, 0;
+  --sim-ref: #1e9bff;                /* reference (template) disks */
+  --sim-ref-bg: #04233a;
+  --sim-ref-rgb: 30, 155, 255;
+  --sim-danger: #ff6b6b;
+  --sim-danger-rgb: 255, 80, 80;
+  --sim-link: #4db2ff;
+  --sim-link-hi: #8ccfff;
+  --sim-code: #00e5ff;
+  --sim-code-rgb: 0, 229, 255;
+
+  --fp-panel: linear-gradient(#0d0f12, #070809);
+  --fp-led: #00e5ff;                 /* neon "cyber" cyan */
+  --fp-led-off-bg: #0a1a1c;
+  --fp-led-off-ring: #2a6b82;
+  --fp-blue: #4db2ff;                /* IMSAI data/address toggles */
+  --fp-red: #ff5666;                 /* IMSAI control toggles */
+  --fp-sw-body: linear-gradient(#20262c, #0c1013);
+  --fp-sw-edge: #000;
+  --fp-name: #4dff7f;
+  --fp-sub: #ffcf7a;
+  --fp-cap: #f2f8fb;
+  --fp-plabel: #e4edf3;
+  --fp-plabel-hi: #ffffff;
+}
+
+.sim-window .window-body { padding: 0; background: var(--sim-bg); }
+
+.sim-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* the original device-panel + terminal row, now above the front panel */
+.sim-main {
+  display: flex;
+  align-items: stretch;
+}
+
+/* ── device pane ── */
+.sim-devices {
+  flex: 0 0 150px;
+  width: 150px;
+  border-right: 1px solid var(--window-border, var(--sim-fg));
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--font-mono, monospace);
+  color: var(--sim-fg);
+  overflow-y: auto;
+}
+
+.sim-panel-title {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--sim-fg-dim);
+  text-transform: uppercase;
+  border-bottom: 1px dotted var(--sim-line);
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+}
+
+.sim-controls { display: flex; gap: 6px; }
+
+.sim-btn {
+  flex: 1;
+  background: var(--sim-btn-bg);
+  border: 1px solid var(--sim-fg);
+  color: var(--sim-fg-dim);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  padding: 6px 4px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+.sim-btn:hover { background: rgba(var(--sim-accent-rgb), 0.12); color: var(--sim-fg); }
+
+.sim-power-btn.sim-on { background: var(--sim-fg); color: var(--sim-bg); box-shadow: 0 0 8px rgba(var(--sim-accent-rgb), 0.6); }
+
+/* ── drive slots (4 floppies A-D + one hard disk) ── */
+.sim-drives, .sim-harddisk { display: flex; flex-direction: column; gap: 4px; }
+
+.sim-drive {
+  border: 1px solid var(--sim-line);
+  padding: 4px 6px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+  user-select: none;
+  touch-action: none;   /* let our pointer-drag own the gesture instead of scrolling */
+}
+.sim-drive .sim-disk-icon {
+  width: 16px; height: 16px;
+  flex: 0 0 16px;
+  border: 1px solid var(--sim-line);
+  position: relative;
+  border-radius: 2px 2px 0 0;
+}
+/* empty floppy slot: dashed, dim */
+.sim-drive.sim-empty { border-style: dashed; color: var(--sim-line); }
+.sim-drive.sim-empty .sim-disk-icon { border-style: dashed; }
+/* loaded floppy: a "floppy" — shutter + label window */
+.sim-drive.sim-loaded { color: var(--sim-fg); cursor: grab; }
+.sim-drive.sim-loaded .sim-disk-icon {
+  border-color: var(--sim-fg);
+  background:
+    linear-gradient(var(--sim-fg),var(--sim-fg)) top 2px right 3px / 8px 6px no-repeat,   /* shutter */
+    linear-gradient(var(--sim-bg),var(--sim-bg)) bottom 2px center / 14px 7px no-repeat;  /* label */
+  background-color: var(--sim-disk-bg);
+}
+/* hard disk (I:, 4 MB): amber dashed bay when empty, gold platter when mounted */
+.sim-drive.sim-hd.sim-empty { border-style: dashed; border-color: var(--sim-hd-dim); color: var(--sim-hd-dim); }
+.sim-drive.sim-hd.sim-loaded { border-color: var(--sim-hd); color: var(--sim-hd); cursor: grab; border-style: solid; }
+.sim-drive.sim-hd .sim-disk-icon {
+  border-radius: 2px; border-color: currentColor; background: none;
+  background-image: repeating-linear-gradient(0deg, transparent 0 2px, currentColor 2px 3px);
+}
+.sim-hd-tag { font-size: 9px; border: 1px solid currentColor; padding: 0 2px; border-radius: 2px; }
+.sim-drive.sim-dragover { background: rgba(var(--sim-accent-rgb), 0.18); border-color: var(--sim-fg); border-style: solid; }
+.sim-drive.sim-hd.sim-dragover { background: rgba(var(--sim-hd-rgb), 0.18); border-color: var(--sim-hd); }
+.sim-drive .sim-drive-label { line-height: 1.1; word-break: break-all; }
+
+/* ── library icon ── */
+.sim-library {
+  border: 1px solid var(--sim-fg);
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--sim-fg-dim);
+}
+.sim-library:hover { background: rgba(var(--sim-accent-rgb), 0.1); color: var(--sim-fg); }
+.sim-library.sim-dragover { background: rgba(var(--sim-accent-rgb), 0.2); }
+.sim-library .sim-lib-icon {
+  width: 34px; height: 26px;
+  border: 1px solid var(--sim-fg);
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 3px, var(--sim-line) 3px 4px);
+}
+
+/* ── Upload / Settings tools ── */
+.sim-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.sim-tool {
+  flex: 1 1 40%;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 7px 2px;
+  background: transparent;
+  border: 1px solid var(--sim-line);
+  color: var(--sim-fg-dim);
+  cursor: pointer;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+}
+.sim-tool:hover { border-color: var(--sim-fg); color: var(--sim-fg); background: rgba(var(--sim-accent-rgb), 0.08); }
+.sim-ico { width: 20px; height: 20px; display: block; }
+
+/* ── settings window ── */
+.sim-setwin .window-body { background: var(--sim-bg); }
+.sim-settings {
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+  font-family: var(--font-mono, monospace);
+  color: var(--sim-fg); font-size: 12px;
+}
+.sim-set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* nowrap so the (i) stays on the label's line — the window is sized to fit the
+   longest label + longest option without wrapping */
+.sim-set-label { color: var(--sim-fg-dim); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.sim-set-select {
+  background: var(--sim-bg); color: var(--sim-fg);
+  border: 1px solid var(--sim-line); border-radius: 2px;
+  font-family: inherit; font-size: 12px; padding: 3px 4px; cursor: pointer;
+}
+.sim-set-select:focus { outline: none; border-color: var(--sim-fg); }
+/* still used by the Modem window's one-line hint */
+.sim-set-note { color: var(--sim-fg-note); font-size: 10px; line-height: 1.45; margin-top: 2px; }
+
+/* per-setting note button + its popover */
+.sim-set-info {
+  flex: 0 0 auto; width: 13px; height: 13px; padding: 0;
+  background: none; border: none; cursor: help;
+  color: var(--sim-fg-dimmer); line-height: 0;
+}
+.sim-set-info svg { width: 13px; height: 13px; display: block; }
+.sim-set-info:hover, .sim-set-info-on { color: var(--sim-fg); }
+.sim-set-info:focus-visible { outline: 1px solid var(--sim-fg); outline-offset: 2px; }
+.sim-set-help {
+  position: fixed; z-index: 9500; width: 264px; max-width: calc(100vw - 16px);
+  background: var(--sim-bg); border: 1px solid var(--sim-fg);
+  box-shadow: 0 0 12px rgba(var(--sim-accent-rgb), 0.35), 0 4px 18px rgba(0, 0, 0, 0.6);
+  padding: 9px 11px 11px;
+  font-family: var(--font-mono, monospace);
+}
+.sim-set-help-title {
+  font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--sim-fg); border-bottom: 1px dotted var(--sim-line);
+  padding-bottom: 4px; margin-bottom: 6px;
+}
+.sim-set-help p { font-size: 11px; line-height: 1.5; color: var(--sim-fg-dim); margin: 0; }
+
+/* ── modem window ── */
+.sim-modemwin .window-body { background: var(--sim-bg); }
+.sim-modem {
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
+  font-family: var(--font-mono, monospace); color: var(--sim-fg); font-size: 12px;
+}
+.sim-modem-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sim-modem-label { color: var(--sim-fg-dim); white-space: nowrap; }
+.sim-modem-input {
+  flex: 1 1 auto; min-width: 0; background: var(--sim-bg); color: var(--sim-fg);
+  border: 1px solid var(--sim-line); border-radius: 2px; font-family: inherit; font-size: 12px; padding: 3px 5px;
+}
+.sim-modem-input:focus { outline: none; border-color: var(--sim-fg); }
+.sim-modem-status {
+  font-size: 11px; color: var(--sim-fg-dim); padding: 5px 0; margin: 2px 0;
+  border-top: 1px dotted var(--sim-line); border-bottom: 1px dotted var(--sim-line);
+}
+.sim-modem-status.sim-modem-connected { color: var(--sim-fg); }
+.sim-modem-status.sim-modem-dialing { color: var(--sim-hd); }
+.sim-modem-pbtitle { font-size: 10px; letter-spacing: 1px; color: var(--sim-fg-dim); text-transform: uppercase; }
+.sim-modem-pb { display: flex; flex-direction: column; gap: 4px; }
+.sim-modem-pbrow { display: flex; align-items: center; gap: 6px; }
+.sim-modem-pbname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.sim-modem-dial, .sim-modem-del { flex: 0 0 auto; padding: 3px 10px; font-size: 11px; }
+.sim-modem-add { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.sim-modem-add .sim-modem-input { flex: 1 1 70px; }
+.sim-modem-tel { font-size: 10px; color: var(--sim-fg-dim); display: flex; align-items: center; gap: 3px; }
+
+/* ── terminal pane ── */
+.sim-terminal { flex: 1 1 auto; min-width: 0; padding: 6px; }
+
+/* green scrollbars (VT100 console + device pane + library) to match the Terminal windows */
+.sim-window .xterm-viewport,
+.sim-window .sim-devices,
+.sim-libwin .window-body,
+.sim-about-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sim-fg) var(--sim-bg);
+}
+.sim-window .xterm-viewport::-webkit-scrollbar,
+.sim-window .sim-devices::-webkit-scrollbar,
+.sim-libwin .window-body::-webkit-scrollbar,
+.sim-about-body::-webkit-scrollbar {
+  width: 8px; height: 8px;
+  background: var(--sim-bg);
+}
+.sim-window .xterm-viewport::-webkit-scrollbar-thumb,
+.sim-window .sim-devices::-webkit-scrollbar-thumb,
+.sim-libwin .window-body::-webkit-scrollbar-thumb,
+.sim-about-body::-webkit-scrollbar-thumb {
+  background: var(--sim-fg);
+}
+.sim-window .xterm-viewport::-webkit-scrollbar-thumb:hover,
+.sim-window .sim-devices::-webkit-scrollbar-thumb:hover,
+.sim-libwin .window-body::-webkit-scrollbar-thumb:hover,
+.sim-about-body::-webkit-scrollbar-thumb:hover {
+  background: var(--sim-fg-dim);
+}
+
+/* ── library window (resizable; icons reflow to width, body scrolls) ── */
+.sim-libwin { display: flex; flex-direction: column; }
+.sim-libwin .window-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.sim-lib-list { display: flex; flex-wrap: wrap; gap: 10px; }
+/* highlight when a disk image is dragged from the desktop onto the window */
+.sim-libwin.sim-dragover .window-body {
+  box-shadow: inset 0 0 0 2px var(--sim-fg);
+  background: rgba(var(--sim-accent-rgb), 0.06);
+}
+.sim-lib-disk {
+  width: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid transparent;
+  cursor: grab;
+  font-size: 11px;
+  color: var(--sim-fg);
+  text-align: center;
+  touch-action: none;   /* our pointer-drag owns the gesture on touch devices */
+}
+.sim-lib-disk:hover { border-color: var(--sim-line); background: rgba(var(--sim-accent-rgb), 0.06); }
+
+/* the element that follows the finger during a touch/pen drag */
+.sim-drag-ghost {
+  position: fixed;
+  z-index: 100000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  opacity: 0.9;
+  background: var(--sim-bg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+}
+.sim-lib-disk .sim-disk-big {
+  position: relative;
+  width: 40px; height: 40px;
+  border: 1px solid var(--sim-fg);
+  border-radius: 3px 3px 0 0;
+  background:
+    linear-gradient(var(--sim-fg),var(--sim-fg)) top 3px right 6px / 12px 9px no-repeat,
+    linear-gradient(var(--sim-bg),var(--sim-bg)) bottom 4px center / 26px 12px no-repeat;
+  background-color: var(--sim-disk-bg);
+}
+.sim-lib-disk .sim-lib-name { word-break: break-all; }
+.sim-lib-empty { color: var(--sim-line); font-size: 12px; }
+
+/* reference (template) disks: neon blue, with a "+" badge = drag to create a copy */
+.sim-lib-disk.sim-ref,
+.sim-lib-disk.sim-ref.sim-hd-disk { color: var(--sim-ref); }
+.sim-lib-disk.sim-ref .sim-disk-big {
+  border-color: var(--sim-ref);
+  background:
+    linear-gradient(var(--sim-ref),var(--sim-ref)) top 3px right 6px / 12px 9px no-repeat,
+    linear-gradient(var(--sim-bg),var(--sim-bg)) bottom 4px center / 26px 12px no-repeat;
+  background-color: var(--sim-ref-bg);
+  box-shadow: 0 0 7px rgba(var(--sim-ref-rgb), 0.55);
+}
+.sim-lib-disk.sim-ref .sim-disk-big::after {
+  content: '+';
+  position: absolute; top: -7px; right: -7px;
+  width: 15px; height: 15px; line-height: 15px; text-align: center;
+  background: var(--sim-ref); color: var(--sim-bg); border-radius: 50%;
+  font-size: 12px; font-weight: bold;
+}
+
+/* hard-disk images (4 MB): gold platter icon + "HD" badge */
+.sim-lib-disk.sim-hd-disk { color: var(--sim-hd); }
+.sim-lib-disk.sim-hd-disk .sim-disk-big {
+  border-color: var(--sim-hd); border-radius: 3px;
+  background: var(--sim-hd-bg);
+  background-image: repeating-linear-gradient(0deg, transparent 0 3px, var(--sim-hd) 3px 4px);
+}
+.sim-lib-disk.sim-hd-disk .sim-disk-big::before {
+  content: 'HD'; position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%);
+  font-size: 8px; line-height: 11px; background: var(--sim-hd); color: var(--sim-bg);
+  padding: 0 3px; border-radius: 2px; font-weight: bold;
+}
+/* the reference hard disk is a reference first: neon blue platter, not gold */
+.sim-lib-disk.sim-ref.sim-hd-disk .sim-disk-big {
+  border-color: var(--sim-ref); background: var(--sim-ref-bg);
+  background-image: repeating-linear-gradient(0deg, transparent 0 3px, var(--sim-ref) 3px 4px);
+}
+.sim-lib-disk.sim-ref.sim-hd-disk .sim-disk-big::before { background: var(--sim-ref); }
+
+/* a disk currently in a drive: dimmed and not draggable to another drive */
+.sim-lib-disk.sim-inuse { opacity: 0.4; cursor: default; }
+.sim-lib-disk.sim-inuse:hover { border-color: transparent; background: none; }
+
+/* text input in prompt dialogs */
+.sim-modal .sim-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--sim-bg);
+  border: 1px solid var(--sim-fg);
+  color: var(--sim-fg);
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  padding: 6px 8px;
+  margin-bottom: 14px;
+}
+.sim-modal .sim-input:focus { outline: none; box-shadow: 0 0 6px rgba(var(--sim-accent-rgb), 0.5); }
+
+/* ── right-click context menu ── */
+.sim-ctxmenu {
+  position: fixed;
+  z-index: 9000;
+  background: var(--sim-bg);
+  border: 1px solid var(--sim-fg);
+  box-shadow: 0 0 10px rgba(var(--sim-accent-rgb), 0.4);
+  min-width: 160px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+.sim-ctxitem {
+  padding: 7px 12px;
+  color: var(--sim-fg);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sim-ctxitem:hover { background: rgba(var(--sim-accent-rgb), 0.15); }
+.sim-ctxitem.sim-danger { color: var(--sim-danger); }
+.sim-ctxitem.sim-danger:hover { background: rgba(var(--sim-danger-rgb), 0.18); }
+
+/* ── modal dialog ── */
+.sim-modal-back {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10000;
+}
+.sim-modal {
+  background: var(--sim-bg);
+  border: 1px solid var(--sim-fg);
+  box-shadow: 0 0 14px rgba(var(--sim-accent-rgb), 0.4);
+  padding: 16px;
+  max-width: 80%;
+  color: var(--sim-fg);
+  font-size: 13px;
+  font-family: var(--font-mono, monospace);
+}
+.sim-modal p { margin-bottom: 14px; line-height: 1.4; }
+.sim-modal .sim-modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.sim-modal .sim-btn { flex: 0 0 auto; padding: 5px 14px; }
+
+/* ── CP-A front panel ── */
+.sim-frontpanel {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--window-border, #00ff41);
+  background: var(--fp-panel);
+  padding: 10px 12px 12px;
+  overflow-x: auto;
+  font-family: var(--font-mono, monospace);
+}
+
+/* matrix: left byte | middle byte (pulled close) | 1fr -> right-aligned controls */
+.fp-grid {
+  display: grid;
+  grid-template-columns: max-content max-content 1fr;
+  column-gap: 12px; row-gap: 10px;
+  align-items: end; justify-items: start;
+}
+.fp-flaggrp, .fp-controls { justify-self: end; }                   /* right column, right-aligned */
+.fp-group { display: flex; align-items: center; gap: 8px; }        /* LED byte + name to its right */
+.fp-swgroup { flex-direction: column; align-items: center; gap: 4px; }  /* switch byte + label below */
+.fp-byte { display: flex; align-items: flex-start; }
+.fp-name { display: flex; flex-direction: column; text-align: left; line-height: 1.2;
+  font-size: 10px; letter-spacing: 1px; color: var(--fp-name); text-transform: uppercase; }
+.fp-nameline { white-space: nowrap; }
+.fp-sub { font-size: 10px; color: var(--fp-sub); white-space: nowrap; }
+.fp-cell, .fp-swcell { display: flex; flex-direction: column; align-items: center; width: 26px; }
+/* Flag lamps sit wider apart than the byte cells so INTERRUPTS ENABLED fits, and
+   are padded by one caption's height so they line up with the address-bus lamps in
+   the same grid row (whose captions hang below instead of above). */
+.fp-flaggrp .fp-cell { position: relative; width: 58px; padding-bottom: 14px; }
+.fp-cap { font-size: 10px; line-height: 1; color: var(--fp-cap); margin-top: 3px; white-space: nowrap; }
+.fp-cap-top { margin-top: 0; margin-bottom: 4px; color: var(--fp-cap); }
+
+.fp-led {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--fp-led-off-bg); border: 1px solid var(--fp-led-off-ring);   /* brighter blue ring when unlit */
+  box-shadow: inset 0 0 2px #000;
+}
+.fp-led.on {
+  background: var(--fp-led); border-color: var(--fp-led);
+  box-shadow: 0 0 4px var(--fp-led), 0 0 9px var(--fp-led);
+}
+
+/* interrupts flag cluster (right column); captions float above their lamps */
+.fp-flaggrp { display: flex; }
+.fp-flagcap {
+  position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  margin-bottom: 4px; white-space: nowrap;
+  display: flex; flex-direction: column; align-items: center;
+  font-size: 10px; line-height: 1; letter-spacing: 1px;
+  color: var(--fp-cap); text-transform: uppercase;
+}
+.fp-flagcap-int { font-size: 9px; letter-spacing: 0; }   /* two words, so drop a size to fit */
+
+/* toggle switches (16 data/address) */
+.fp-toggle {
+  width: 13px; height: 20px; border-radius: 3px;
+  background: var(--fp-sw-body);
+  border: 1px solid var(--fp-sw-edge); cursor: pointer;
+  position: relative; box-shadow: inset 0 -6px 5px rgba(0,0,0,0.5);
+}
+.fp-toggle::after {                      /* the paddle tip, down by default */
+  content: ''; position: absolute; left: 1px; right: 1px; bottom: 1px; height: 9px;
+  border-radius: 2px; background: currentColor; opacity: 0.55;
+}
+.fp-toggle.up::after { top: 1px; bottom: auto; opacity: 1; }
+.fp-toggle.up { box-shadow: inset 0 6px 5px rgba(0,0,0,0.5); }
+.fp-toggle.fp-blue { color: var(--fp-blue); }
+.fp-toggle.fp-red { color: var(--fp-red); }
+.fp-toggle.up.fp-blue { box-shadow: inset 0 6px 5px rgba(0,0,0,0.5), 0 0 6px var(--fp-blue); }
+.fp-toggle.up.fp-red { box-shadow: inset 0 6px 5px rgba(0,0,0,0.5), 0 0 6px var(--fp-red); }
+
+/* control paddles (momentary + power) */
+/* The spelled-out paddle names (EXAM NEXT, DEP NEXT…) are much wider than the
+   old abbreviations, and the panel is already as wide as the sim window, so the
+   cluster tightens and drops a point rather than forcing a scrollbar. */
+.fp-controls { display: flex; align-items: flex-end; gap: 5px; }
+.fp-paddle { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 48px; }
+.fp-plabel { font-size: 9px; line-height: 1.2; color: var(--fp-plabel); cursor: pointer; text-align: center; white-space: nowrap; }
+.fp-plabel:hover { color: var(--fp-plabel-hi); }
+.fp-knob {
+  width: 15px; height: 22px; border-radius: 3px;
+  background: var(--fp-sw-body);
+  border: 1px solid var(--fp-sw-edge); position: relative;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.6);
+}
+.fp-knob.fp-blue { color: var(--fp-blue); }
+.fp-knob.fp-red { color: var(--fp-red); }
+.fp-knob::after {
+  content: ''; position: absolute; left: 2px; right: 2px; height: 8px;
+  top: 50%; transform: translateY(-50%); border-radius: 2px;
+  background: currentColor; opacity: 0.6; transition: top 0.08s, bottom 0.08s;
+}
+.fp-knob.up::after { top: 2px; transform: none; opacity: 1; box-shadow: 0 0 6px currentColor; }
+.fp-knob.dn::after { top: auto; bottom: 2px; transform: none; opacity: 1; }
+
+/* ── About window: docs rendered from markdown ── */
+/* The base .popup-window .window-body has no height and simply grows past the
+   window, so scope a flex column here: titlebar fixed, body bounded, pane scrolls. */
+.sim-aboutwin { display: flex; flex-direction: column; overflow: hidden; }
+.sim-aboutwin .window-titlebar { flex: 0 0 auto; }
+.sim-aboutwin .window-body { flex: 1 1 auto; min-height: 0; padding: 0; overflow: hidden; }
+.sim-about { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.sim-about-tabs {
+  display: flex; gap: 4px; flex: 0 0 auto;
+  padding: 6px 8px 0; border-bottom: 1px solid var(--sim-line);
+}
+.sim-about-tab {
+  font-family: var(--font-mono, monospace); font-size: 11px; letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 5px 12px; cursor: pointer;
+  color: var(--sim-fg-dimmer); background: transparent;
+  border: 1px solid var(--sim-line); border-bottom: none;
+}
+.sim-about-tab:hover { color: var(--sim-fg); background: rgba(var(--sim-accent-rgb), 0.06); }
+.sim-about-tab.sim-about-on {
+  color: var(--sim-fg); background: rgba(var(--sim-accent-rgb), 0.1);
+  text-shadow: 0 0 6px rgba(var(--sim-accent-rgb), 0.5);
+}
+.sim-about-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: scroll;
+  padding: 14px 18px 22px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px; line-height: 1.65; color: var(--sim-fg-dim);
+}
+.sim-about-msg { color: var(--sim-fg-dimmer); }
+.sim-about-body h1, .sim-about-body h2, .sim-about-body h3, .sim-about-body h4 {
+  color: var(--sim-fg); font-weight: 400; letter-spacing: 1px; text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(var(--sim-accent-rgb), 0.35);
+  margin: 22px 0 10px; line-height: 1.3;
+}
+.sim-about-body h1 { font-size: 16px; margin-top: 4px; }
+.sim-about-body h2 { font-size: 13px; border-bottom: 1px solid var(--sim-line); padding-bottom: 5px; }
+.sim-about-body h3, .sim-about-body h4 { font-size: 12px; color: var(--sim-fg-alt); }
+.sim-about-body p { margin: 0 0 12px; }
+.sim-about-body strong { color: var(--sim-fg); font-weight: 700; }
+.sim-about-body em { color: var(--sim-fg-alt); font-style: italic; }
+.sim-about-body a { color: var(--sim-link); text-decoration: none; border-bottom: 1px dotted var(--sim-link); }
+.sim-about-body a:hover { color: var(--sim-link-hi); }
+.sim-about-body code {
+  color: var(--sim-code); background: rgba(var(--sim-code-rgb), 0.08);
+  border: 1px solid rgba(var(--sim-code-rgb), 0.2); border-radius: 2px;
+  padding: 0 4px; font-size: 11px;
+}
+.sim-about-body pre {
+  background: rgba(var(--sim-accent-rgb), 0.04); border: 1px solid var(--sim-line);
+  padding: 10px 12px; margin: 0 0 14px; overflow-x: auto;
+}
+.sim-about-body pre code { border: none; background: none; padding: 0; color: var(--sim-fg-dim); }
+.sim-about-body ul, .sim-about-body ol { margin: 0 0 14px; padding-left: 22px; }
+.sim-about-body li { margin-bottom: 6px; }
+.sim-about-body li::marker { color: var(--sim-fg-dimmer); }
+.sim-about-body hr { border: none; border-top: 1px solid var(--sim-line); margin: 20px 0; }
+/* tables scroll inside their own box so the pane never scrolls sideways */
+.sim-about-body table {
+  display: block; width: max-content; max-width: 100%; overflow-x: auto;
+  border-collapse: collapse; margin: 0 0 16px; font-size: 11px;
+}
+.sim-about-body th, .sim-about-body td {
+  border: 1px solid var(--sim-line); padding: 5px 10px; text-align: left; vertical-align: top;
+}
+.sim-about-body th {
+  color: var(--sim-fg); background: rgba(var(--sim-accent-rgb), 0.07);
+  text-transform: uppercase; letter-spacing: 1px; font-weight: 400;
+}
+
+/* ── theme: Original ──────────────────────────────────────────────────────────
+   The 1975 machine: IMSAI powder-blue trim, yellowed-ivory silkscreen, red
+   panel lamps and real blue/red paddle switches. Icons become period hardware
+   (8-inch floppies, a disk-pack drive, a disk filing box) drawn as inline SVG,
+   so the markup is untouched and only the art swaps.  */
+:root.sim-theme-original {
+  --imsai-blue: #4d82e3;             /* IMSAI trim blue */
+  --imsai-blue-rgb: 77, 130, 227;    /* same colour, for the washes and glows */
+  --imsai-blue-dim: #5c7f99;
+  --imsai-ivory: #f4efe1;            /* slightly yellowed ivory white */
+
+  --sim-bg: #0b0d10;
+  --sim-fg: var(--imsai-ivory);
+  --sim-fg-dim: #e3dcca;
+  --sim-fg-dimmer: #bdb6a4;
+  --sim-fg-alt: var(--imsai-ivory);
+  --sim-fg-note: #a49d8a;
+  --sim-line: var(--imsai-blue-dim);
+  --sim-accent-rgb: var(--imsai-blue-rgb);
+  --sim-btn-bg: #16202a;
+  --sim-disk-bg: #17191c;
+  --sim-hd: #d9a441;
+  --sim-hd-dim: #8a6a2c;
+  --sim-hd-bg: #241c0c;
+  --sim-hd-rgb: 217, 164, 65;
+  --sim-ref: #6fd3ff;
+  --sim-ref-bg: #0c2734;
+  --sim-ref-rgb: 111, 211, 255;
+  --sim-link: #8fd0ff;
+  --sim-link-hi: #c2e6ff;
+  --sim-code: #e8d9a0;
+  --sim-code-rgb: 232, 217, 160;
+
+  --fp-panel: linear-gradient(#1b2530, #101820);
+  --fp-led: #ff2b1f;                 /* lamp lit */
+  --fp-led-off-bg: #3a0c08;          /* lamp dark */
+  --fp-led-off-ring: #6d1e15;
+  --fp-blue: #2f79c4;
+  --fp-red: #c8392b;
+  --fp-sw-body: linear-gradient(#2c3742, #131b23);
+  --fp-sw-edge: #05080b;
+  --fp-name: var(--imsai-ivory);
+  --fp-sub: #ded7c4;
+  --fp-cap: var(--imsai-ivory);
+  --fp-plabel: var(--imsai-ivory);
+  --fp-plabel-hi: #ffffff;
+}
+
+/* window frame + the divider between the device pane and the console. Scoped to
+   the sim's own windows so the rest of the desktop keeps its green chrome. */
+:root.sim-theme-original .sim-window,
+:root.sim-theme-original .sim-libwin,
+:root.sim-theme-original .sim-setwin,
+:root.sim-theme-original .sim-modemwin,
+:root.sim-theme-original .sim-aboutwin {
+  --window-border: var(--imsai-blue);
+  --titlebar-bg: #16202a;
+  --crt-green: #ffffff;
+  --crt-green-dim: var(--imsai-ivory);
+  --crt-glow: 0 0 10px rgba(var(--imsai-blue-rgb), 0.22);
+}
+:root.sim-theme-original .sim-window .window-btn:hover,
+:root.sim-theme-original .sim-libwin .window-btn:hover,
+:root.sim-theme-original .sim-setwin .window-btn:hover,
+:root.sim-theme-original .sim-modemwin .window-btn:hover,
+:root.sim-theme-original .sim-aboutwin .window-btn:hover {
+  background: rgba(var(--imsai-blue-rgb), 0.16);
+}
+/* A heavier frame on the machine itself, so the blue actually reads as trim.
+   .window is border-box, so this eats 4px of content width — the window is sized
+   with that allowance (see the front-panel width budget in sim.js). */
+:root.sim-theme-original .sim-window { border-width: 3px; }
+:root.sim-theme-original .sim-devices { border-right-color: var(--imsai-blue); }
+:root.sim-theme-original .sim-frontpanel { border-top-color: var(--imsai-blue); }
+:root.sim-theme-original .sim-panel-title { border-bottom-color: var(--imsai-blue-dim); }
+
+/* ── period icons ── */
+:root.sim-theme-original .sim-drive .sim-disk-icon,
+:root.sim-theme-original .sim-lib-disk .sim-disk-big {
+  border: none; border-radius: 0; box-shadow: none;
+  background: center / contain no-repeat;
+}
+/* the slot icon is only 16px, so buy back a little detail */
+:root.sim-theme-original .sim-drive .sim-disk-icon { width: 19px; height: 19px; flex: 0 0 19px; }
+:root.sim-theme-original .sim-drive.sim-empty .sim-disk-icon { background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%20%3Crect%20x='1'%20y='7'%20width='30'%20height='18'%20rx='1.5'%20fill='%230e1114'%20stroke='%234a6478'%20stroke-dasharray='3%202'/%3E%20%3Crect%20x='5'%20y='14.3'%20width='22'%20height='3.4'%20rx='1.2'%20fill='%2305070a'/%3E%20%3Ccircle%20cx='27'%20cy='21.4'%20r='1.5'%20fill='%233a0c08'/%3E%20%3C/svg%3E"); }
+:root.sim-theme-original .sim-drive.sim-loaded .sim-disk-icon,
+:root.sim-theme-original .sim-lib-disk .sim-disk-big {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%20%3Crect%20x='1'%20y='1'%20width='30'%20height='30'%20rx='1'%20fill='%231e2227'%20stroke='%236e93ad'/%3E%20%3Crect%20x='4.5'%20y='3.5'%20width='14'%20height='5'%20fill='%23efe7d2'/%3E%20%3Ccircle%20cx='16'%20cy='17'%20r='6.2'%20fill='%230a0b0d'/%3E%20%3Ccircle%20cx='16'%20cy='17'%20r='3.2'%20fill='%237e8996'/%3E%20%3Crect%20x='13.8'%20y='23.4'%20width='4.4'%20height='6'%20rx='2.2'%20fill='%230a0b0d'/%3E%20%3Ccircle%20cx='23.8'%20cy='17'%20r='0.9'%20fill='%230a0b0d'/%3E%20%3C/svg%3E");
+}
+:root.sim-theme-original .sim-lib-disk.sim-ref .sim-disk-big {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%20%3Crect%20x='1'%20y='1'%20width='30'%20height='30'%20rx='1'%20fill='%2312222c'%20stroke='%236fd3ff'/%3E%20%3Crect%20x='4.5'%20y='3.5'%20width='14'%20height='5'%20fill='%23bfe9ff'/%3E%20%3Ccircle%20cx='16'%20cy='17'%20r='6.2'%20fill='%230a0b0d'/%3E%20%3Ccircle%20cx='16'%20cy='17'%20r='3.2'%20fill='%234f93b3'/%3E%20%3Crect%20x='13.8'%20y='23.4'%20width='4.4'%20height='6'%20rx='2.2'%20fill='%230a0b0d'/%3E%20%3Ccircle%20cx='23.8'%20cy='17'%20r='0.9'%20fill='%230a0b0d'/%3E%20%3C/svg%3E");
+}
+:root.sim-theme-original .sim-drive.sim-hd.sim-empty .sim-disk-icon { background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%20%3Crect%20x='1'%20y='4'%20width='30'%20height='24'%20rx='2'%20fill='%230e1114'%20stroke='%234a6478'%20stroke-dasharray='3%202'/%3E%20%3Ccircle%20cx='16'%20cy='16'%20r='8.4'%20fill='none'%20stroke='%233c4a55'%20stroke-dasharray='2%202'/%3E%20%3C/svg%3E"); }
+:root.sim-theme-original .sim-drive.sim-hd.sim-loaded .sim-disk-icon,
+:root.sim-theme-original .sim-lib-disk.sim-hd-disk .sim-disk-big {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%20%3Crect%20x='1'%20y='4'%20width='30'%20height='24'%20rx='2'%20fill='%23191c20'%20stroke='%238a939d'/%3E%20%3Ccircle%20cx='16'%20cy='16'%20r='8.4'%20fill='%230b0d0f'%20stroke='%238a939d'%20stroke-width='0.8'/%3E%20%3Ccircle%20cx='16'%20cy='16'%20r='5.2'%20fill='none'%20stroke='%2359636e'%20stroke-width='0.7'/%3E%20%3Ccircle%20cx='16'%20cy='16'%20r='1.7'%20fill='%23d9a441'/%3E%20%3Crect%20x='3.5'%20y='24.4'%20width='6'%20height='2'%20rx='0.6'%20fill='%233a0c08'/%3E%20%3Crect%20x='10.5'%20y='24.4'%20width='6'%20height='2'%20rx='0.6'%20fill='%2320262c'/%3E%20%3C/svg%3E");
+}
+:root.sim-theme-original .sim-lib-disk.sim-ref.sim-hd-disk .sim-disk-big {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%20%3Crect%20x='1'%20y='4'%20width='30'%20height='24'%20rx='2'%20fill='%2312222c'%20stroke='%236fd3ff'/%3E%20%3Ccircle%20cx='16'%20cy='16'%20r='8.4'%20fill='%230b0d0f'%20stroke='%236fd3ff'%20stroke-width='0.8'/%3E%20%3Ccircle%20cx='16'%20cy='16'%20r='5.2'%20fill='none'%20stroke='%2359636e'%20stroke-width='0.7'/%3E%20%3Ccircle%20cx='16'%20cy='16'%20r='1.7'%20fill='%236fd3ff'/%3E%20%3Crect%20x='3.5'%20y='24.4'%20width='6'%20height='2'%20rx='0.6'%20fill='%233a0c08'/%3E%20%3Crect%20x='10.5'%20y='24.4'%20width='6'%20height='2'%20rx='0.6'%20fill='%2320262c'/%3E%20%3C/svg%3E");
+}
+:root.sim-theme-original .sim-library .sim-lib-icon {
+  width: 38px; height: 30px;
+  border: none; border-radius: 0;
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2040%2032'%3E%20%3Crect%20x='7'%20y='2'%20width='9'%20height='15'%20fill='%231e2227'%20stroke='%236e93ad'%20stroke-width='0.8'/%3E%20%3Crect%20x='8'%20y='3.3'%20width='7'%20height='2.6'%20fill='%23efe7d2'/%3E%20%3Crect%20x='16.6'%20y='3'%20width='9'%20height='14'%20fill='%231e2227'%20stroke='%236e93ad'%20stroke-width='0.8'/%3E%20%3Crect%20x='17.6'%20y='4.3'%20width='7'%20height='2.6'%20fill='%23efe7d2'/%3E%20%3Crect%20x='26.2'%20y='2'%20width='9'%20height='15'%20fill='%231e2227'%20stroke='%236e93ad'%20stroke-width='0.8'/%3E%20%3Crect%20x='27.2'%20y='3.3'%20width='7'%20height='2.6'%20fill='%23efe7d2'/%3E%20%3Cpath%20d='M2%2013%20h36%20v16%20a2%202%200%200%201%20-2%202%20H4%20a2%202%200%200%201%20-2%20-2%20Z'%20fill='%2333281d'%20stroke='%238a6f4e'/%3E%20%3Crect%20x='2.6'%20y='13.6'%20width='34.8'%20height='2.6'%20fill='%234a3a29'/%3E%20%3Crect%20x='8'%20y='20'%20width='17'%20height='5'%20fill='%23efe7d2'/%3E%20%3C/svg%3E");
+}
+
+/* ── Original: real toggle/paddle switches ──
+   A chrome bezel (::before) with a coloured plastic bat (::after) emerging from
+   under it. Only the look is themed — the base rules keep owning up/down/neutral
+   positioning, so the switch logic is untouched. */
+:root.sim-theme-original .fp-toggle { width: 16px; height: 28px; border-radius: 2px; }
+:root.sim-theme-original .fp-knob   { width: 18px; height: 30px; border-radius: 2px; }
+:root.sim-theme-original .fp-toggle,
+:root.sim-theme-original .fp-knob,
+:root.sim-theme-original .fp-toggle.up {
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+:root.sim-theme-original .fp-toggle.up.fp-blue,
+:root.sim-theme-original .fp-toggle.up.fp-red {
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.85), 0 0 5px currentColor;
+}
+
+:root.sim-theme-original .fp-toggle::after,
+:root.sim-theme-original .fp-knob::after {
+  left: 2.5px; right: 2.5px; height: 17px;
+  border-radius: 2px 2px 6px 6px;
+  opacity: 1; z-index: 1;
+  background-color: currentColor;
+  background-image: linear-gradient(90deg,
+    rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.12) 24%,
+    rgba(255, 255, 255, 0.55) 44%, rgba(255, 255, 255, 0.1) 62%,
+    rgba(0, 0, 0, 0.28) 84%, rgba(0, 0, 0, 0.62) 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+:root.sim-theme-original .fp-knob.up::after,
+:root.sim-theme-original .fp-knob.dn::after { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+
+/* the chrome bezel the bat pivots in */
+:root.sim-theme-original .fp-toggle::before,
+:root.sim-theme-original .fp-knob::before {
+  content: ''; position: absolute; z-index: 2;
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 14px; height: 6px; border-radius: 1px;
+  background: linear-gradient(#d2dae1, #808b96 45%, #333c45);
+  box-shadow: 0 0 0 1px #05080b, 0 2px 3px rgba(0, 0, 0, 0.7);
+}
+:root.sim-theme-original .fp-knob::before { width: 16px; }
+
+/* ── Original: red panel lamps ── */
+:root.sim-theme-original .fp-led {
+  width: 10px; height: 10px;
+  border-color: #12181e;
+  background: radial-gradient(circle at 35% 30%, #6d1e15, var(--fp-led-off-bg) 72%);
+  box-shadow: inset 0 0 2px #000, 0 0 0 1px rgba(var(--imsai-blue-rgb), 0.16);
+}
+:root.sim-theme-original .fp-led.on {
+  border-color: #7d1a10;
+  background: radial-gradient(circle at 35% 30%, #ffbdb2, var(--fp-led) 55%, #a8110a 100%);
+  box-shadow: 0 0 5px var(--fp-led), 0 0 13px rgba(255, 43, 31, 0.7);
+}
+
+/* ── Original: chrome that should follow the powder blue, not the ivory text ── */
+:root.sim-theme-original .sim-btn,
+:root.sim-theme-original .sim-library { border-color: var(--imsai-blue); }
+:root.sim-theme-original .sim-btn:hover,
+:root.sim-theme-original .sim-tool:hover { border-color: var(--imsai-blue); color: var(--sim-fg); }
+:root.sim-theme-original .sim-power-btn.sim-on {
+  background: var(--imsai-blue); color: var(--sim-bg);
+  box-shadow: 0 0 8px rgba(var(--imsai-blue-rgb), 0.55);
+}
+:root.sim-theme-original .sim-set-select:focus,
+:root.sim-theme-original .sim-modem-input:focus { border-color: var(--imsai-blue); }
