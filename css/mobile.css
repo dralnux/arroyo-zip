@@ -1,0 +1,40 @@
+@media (max-width: 480px) {
+  #terminal-window {
+    top: 8px;
+    left: 8px;
+    width: calc(100vw - 16px);
+    height: 58%;
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  #terminal {
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+    padding: 6px;
+  }
+
+  .window-titlebar {
+    height: 32px;
+  }
+
+  .window-title {
+    font-size: 13px;
+  }
+
+  .window-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+
+  .taskbar-icon {
+    padding: 3px 5px;
+    font-size: 10px;
+  }
+
+  .taskbar-icon img {
+    width: 18px;
+    height: 18px;
+  }
+}
